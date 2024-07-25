@@ -1,0 +1,141 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from typing import Dict, List
+
+class LiquidityPool:
+    def __init__(self, token_a: str, token_b: str):
+        self.token_a = token_a
+        self.token_b = token_b
+        self.pool_a = 0.0
+        self.pool_b = 0.0
+
+    def add_liquidity(self, amount_a: float, amount_b: float):
+        self.pool_a += amount_a
+        self.pool_b += amount_b
+        return f"Added {amount_a} {self.token_a} and {amount_b} {self.token_b} to the pool."
+
+    def remove_liquidity(self, amount_a: float, amount_b: float):
+        if amount_a > self.pool_a or amount_b > self.pool_b:
+            return "Insufficient liquidity."
+        self.pool_a -= amount_a
+        self.pool_b -= amount_b
+        return f"Removed {amount_a} {self.token_a} and {amount_b} {self.token_b} from the pool."
+
+    def get_pool_status(self) -> Dict:
+        return {
+            "Token A": self.token_a,
+            "Token B": self.token_b,
+            "Pool A": self.pool_a,
+            "Pool B": self.pool_b
+        }
+
+class TokenSwap:
+    def __init__(self, from_token: str, to_token: str, amount_from: float, amount_to: float):
+        self.from_token = from_token
+        self.to_token = to_token
+        self.amount_from = amount_from
+        self.amount_to = amount_to
+
+    def to_dict(self) -> Dict:
+        return {
+            "From Token": self.from_token,
+            "To Token": self.to_token,
+            "Amount From": self.amount_from,
+            "Amount To": self.amount_to
+        }
+
+class DeFiToolkitLab:
+    def __init__(self):
+        self.liquidity_pools = {}  # Maps pool identifiers to LiquidityPool objects
+        self.swaps = []  # List of TokenSwap objects
+
+    def create_pool(self, pool_id: str, token_a: str, token_b: str):
+        if pool_id in self.liquidity_pools:
+            return "Pool already exists."
+        self.liquidity_pools[pool_id] = LiquidityPool(token_a, token_b)
+        return f"Created liquidity pool {pool_id} with {token_a} and {token_b}."
+
+    def add_liquidity(self, pool_id: str, amount_a: float, amount_b: float):
+        if pool_id not in self.liquidity_pools:
+            return "Pool does not exist."
+        pool = self.liquidity_pools[pool_id]
+        return pool.add_liquidity(amount_a, amount_b)
+
+    def remove_liquidity(self, pool_id: str, amount_a: float, amount_b: float):
+        if pool_id not in self.liquidity_pools:
+            return "Pool does not exist."
+        pool = self.liquidity_pools[pool_id]
+        return pool.remove_liquidity(amount_a, amount_b)
+
+    def record_swap(self, from_token: str, to_token: str, amount_from: float, amount_to: float):
+        swap = TokenSwap(from_token, to_token, amount_from, amount_to)
+        self.swaps.append(swap)
+        return f"Recorded swap: {swap.to_dict()}"
+
+    def analyze_pools(self) -> pd.DataFrame:
+        pool_data = []
+        for pool_id, pool in self.liquidity_pools.items():
+            status = pool.get_pool_status()
+            pool_data.append({
+                "Pool ID": pool_id,
+                "Token A": status["Token A"],
+                "Token B": status["Token B"],
+                "Pool A Amount": status["Pool A"],
+                "Pool B Amount": status["Pool B"]
+            })
+        df = pd.DataFrame(pool_data)
+        return df
+
+    def analyze_swaps(self) -> pd.DataFrame:
+        swap_data = [swap.to_dict() for swap in self.swaps]
+        df = pd.DataFrame(swap_data)
+        return df
+
+    def plot_pool_performance(self):
+        df = self.analyze_pools()
+        df.plot(kind='bar', x='Pool ID', y=['Pool A Amount', 'Pool B Amount'], figsize=(12, 6))
+        plt.title('Liquidity Pool Performance')
+        plt.xlabel('Pool ID')
+        plt.ylabel('Amount')
+        plt.show()
+
+    def plot_swap_performance(self):
+        df = self.analyze_swaps()
+        df.plot(kind='bar', x='From Token', y='Amount From', figsize=(12, 6), color='b', alpha=0.6)
+        df.plot(kind='bar', x='To Token', y='Amount To', figsize=(12, 6), color='r', alpha=0.6)
+        plt.title('Token Swap Performance')
+        plt.xlabel('Token')
+        plt.ylabel('Amount')
+        plt.show()
+
+# Example Usage
+if __name__ == "__main__":
+    toolkit = DeFiToolkitLab()
+
+    # Create liquidity pools
+    print(toolkit.create_pool("pool1", "ETH", "USDT"))
+    print(toolkit.create_pool("pool2", "BTC", "USDT"))
+
+    # Add liquidity
+    print(toolkit.add_liquidity("pool1", 100, 50000))
+    print(toolkit.add_liquidity("pool2", 0.5, 30000))
+
+    # Remove liquidity
+    print(toolkit.remove_liquidity("pool1", 10, 5000))
+
+    # Record token swaps
+    print(toolkit.record_swap("ETH", "USDT", 50, 25000))
+    print(toolkit.record_swap("BTC", "USDT", 0.1, 6000))
+
+    # Analyze and plot performance
+    print("\nLiquidity Pools Analysis:")
+    print(toolkit.analyze_pools())
+    
+    print("\nToken Swaps Analysis:")
+    print(toolkit.analyze_swaps())
+
+    print("\nPlotting Liquidity Pool Performance:")
+    toolkit.plot_pool_performance()
+
+    print("\nPlotting Token Swap Performance:")
+    toolkit.plot_swap_performance()
